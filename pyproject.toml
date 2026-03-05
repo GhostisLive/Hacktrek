@@ -1,0 +1,29 @@
+[project]
+name = "hacktrek"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi>=0.135.1",
+    "folium>=0.20.0",
+    "groq>=1.0.0",
+    "langchain>=1.2.10",
+    "langchain-community>=0.4.1",
+    "networkx>=3.6.1",
+    "numpy>=2.4.2",
+    "ollama>=0.6.1",
+    "ortools>=9.15.6755",
+    "osmnx>=2.1.0",
+    "pandas>=2.3.3",
+    "pydantic>=2.12.5",
+    "python-dotenv>=1.2.2",
+    "pyvrp>=0.13.3",
+    "redis>=7.2.1",
+    "sentence-transformers>=5.2.3",
+    "simpy>=4.1.1",
+    "sqlmodel>=0.0.37",
+    "streamlit>=1.54.0",
+    "torch>=2.10.0",
+    "uvicorn>=0.41.0",
+]
