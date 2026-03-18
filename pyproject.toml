@@ -10,6 +10,7 @@ dependencies = [
     "uvicorn>=0.41.0",
     "pydantic>=2.12.5",
     "python-dotenv>=1.2.2",
+    "loguru>=0.7.3",
 
     # --- Graph & routing ---
     "osmnx>=2.1.0",
