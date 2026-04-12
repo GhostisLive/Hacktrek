@@ -124,3 +124,11 @@ hacktrek/
 > If anything looks off or the smoke test fails, check that `.env` has
 > `CITY_NAME=Kolkata, India` and that `uv sync` ran without errors.
 > Ping me and I'll sort it.
+
+Day 3
+
+The next step is to build the VRP (Vehicle Routing Problem) solver, which is the brain of the delivery system. It takes the distance matrix you built today and figures out the most efficient routes for multiple delivery vehicles.
+Start by installing the solver library. Google's OR-Tools is the industry standard for this and works well with the matrix you already have. Run uv add ortools in your terminal.
+Then create three files inside core/vrp/. First create __init__.py which can be empty, just like the other packages. Then create models.py which defines the data shapes — a Stop (single delivery point), a Route (one vehicle's full journey), and a Solution (all routes combined). These are simple Python dataclasses. Finally create solver.py which contains the main solve_vrp() function that takes your distance matrix, the list of locations, number of vehicles, and time limits, then returns an optimised Solution.
+After that write tests/test_vrp.py to check that the solver returns the right number of routes, every stop is visited exactly once, no route exceeds the time limit, and the depot is always the start and end of every route.
+Before starting any of that though, share your data/sample_orders.json file so the solver and tests can be built around your actual data — the number of stops, whether there are time windows, delivery priorities and so on will all affect how the solver is configured. That file will also make the tests realistic rather than synthetic.
