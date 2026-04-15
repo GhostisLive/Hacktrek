@@ -19,7 +19,7 @@ dependencies = [
     "pandas>=2.3.3",
 
     # --- VRP solver ---
-    "pyvrp>=0.13.3",
+    "ortools>=9.10.0",
 
     # --- Agent simulation ---
     "simpy>=4.1.1",
