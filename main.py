@@ -1,10 +1,3 @@
-"""
-main.py
-
-FleetMind entry point.
-Supports smoke test, API server, and dashboard.
-"""
-
 import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -18,7 +11,6 @@ import config
 
 
 def smoke_test():
-    """Quick sanity check: download/load the city graph and print a summary."""
     logger.info("=== FleetMind — Smoke Test ===")
 
     G = load_graph()
@@ -30,26 +22,13 @@ def smoke_test():
     logger.info("✓ Graph load OK")
 
 
-# Global coordinator for API
 coordinator: CoordinatorAgent | None = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    FastAPI lifespan context: startup and shutdown hooks.
-
-    On startup:
-    - Warm up graph
-    - Initialize coordinator
-    - Start polling loop
-
-    On shutdown:
-    - Stop coordinator polling
-    """
     global coordinator
 
-    # Startup
     logger.info("=== FleetMind API Starting ===")
     smoke_test()
 
@@ -59,16 +38,14 @@ async def lifespan(app: FastAPI):
 
     logger.success(f"✓ Coordinator running with {config.MAX_DRIVERS} drivers")
 
-    yield  # App is running here
+    yield
 
-    # Shutdown
     logger.info("Shutting down coordinator...")
     await coordinator.stop_polling()
     logger.success("✓ Coordinator stopped")
 
 
 def start_api():
-    """Start FastAPI server."""
     app = FastAPI(
         title="FleetMind",
         description="Multi-driver delivery routing with agent coordination",
@@ -76,15 +53,12 @@ def start_api():
         lifespan=lifespan,
     )
 
-    # Include routes
     app.include_router(router, prefix="/api")
 
-    # Health check
     @app.get("/health")
     async def health():
         return {"status": "ok", "version": "0.1.0"}
 
-    # Run server
     logger.info(f"Starting API on {config.API_HOST}:{config.API_PORT}")
     uvicorn.run(
         app,

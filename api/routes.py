@@ -1,11 +1,3 @@
-"""
-FastAPI Routes for FleetMind
-
-Endpoints:
-  POST /orders/dispatch   - Dispatch a batch of orders
-  GET /fleet/status       - Get current fleet status
-"""
-
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
@@ -13,36 +5,30 @@ from loguru import logger
 
 from core.agents.coordinator import CoordinatorAgent
 
-# Router instance
 router = APIRouter()
 
-# Global coordinator reference (will be set during app startup)
 coordinator: Optional[CoordinatorAgent] = None
 
 
 def set_coordinator(coord: CoordinatorAgent):
-    """Called by app lifespan to inject the coordinator."""
     global coordinator
     coordinator = coord
 
 
 class OrderLocation(BaseModel):
-    """Single delivery location."""
     lat: float
     lon: float
-    demand: int = 1  # Items to deliver
+    demand: int = 1
 
 
 class DispatchRequest(BaseModel):
-    """Request to dispatch orders."""
     orders: list[OrderLocation]
     num_vehicles: int = 5
-    max_route_time: int = 14400  # 4 hours in seconds
+    max_route_time: int = 14400
     vehicle_capacity: int = 20
 
 
 class DispatchResponse(BaseModel):
-    """Response from dispatch."""
     num_routes: int
     total_distance: int
     solver_status: str
@@ -51,21 +37,6 @@ class DispatchResponse(BaseModel):
 
 @router.post("/orders/dispatch", response_model=DispatchResponse)
 async def dispatch_orders(request: DispatchRequest):
-    """
-    Dispatch a batch of orders to vehicles.
-
-    This endpoint:
-    1. Takes delivery locations
-    2. Builds distance matrix from current city graph
-    3. Solves VRP
-    4. Assigns routes to drivers
-    5. Starts coordinator polling
-
-    Query parameters:
-    - num_vehicles: number of delivery vehicles (default 5)
-    - max_route_time: max seconds per route (default 14400 = 4 hours)
-    - vehicle_capacity: vehicle load capacity (default 20 items)
-    """
     if not coordinator:
         raise HTTPException(status_code=500, detail="Coordinator not initialized")
 
@@ -78,22 +49,18 @@ async def dispatch_orders(request: DispatchRequest):
         from core.vrp.models import Stop
         from core.vrp.solver import solve_vrp
 
-        # Load graph and build distance matrix
         logger.info(f"Dispatching {len(request.orders)} orders...")
         G = load_graph()
 
-        # Create depot at center of orders
         depot_lat = sum(o.lat for o in request.orders) / len(request.orders)
         depot_lon = sum(o.lon for o in request.orders) / len(request.orders)
 
         locations = [{"lat": depot_lat, "lon": depot_lon}]
         locations.extend([{"lat": o.lat, "lon": o.lon} for o in request.orders])
 
-        # Build distance matrix
         matrix, osm_nodes = build_distance_matrix(G, locations)
         logger.info(f"Distance matrix built: {matrix.shape}")
 
-        # Create Stop objects
         stops = [
             Stop(
                 id=0,
@@ -112,7 +79,6 @@ async def dispatch_orders(request: DispatchRequest):
                 )
             )
 
-        # Solve VRP
         solution = solve_vrp(
             distance_matrix=matrix,
             stops=stops,
@@ -125,7 +91,6 @@ async def dispatch_orders(request: DispatchRequest):
         if not solution.routes:
             raise HTTPException(status_code=500, detail="VRP solver failed to find solution")
 
-        # Dispatch to coordinator
         await coordinator.dispatch_solution(solution)
 
         logger.success(
@@ -147,7 +112,6 @@ async def dispatch_orders(request: DispatchRequest):
 
 
 class FleetStatusResponse(BaseModel):
-    """Current fleet status."""
     total_drivers: int
     idle_count: int
     enroute_count: int
@@ -159,13 +123,6 @@ class FleetStatusResponse(BaseModel):
 
 @router.get("/fleet/status", response_model=FleetStatusResponse)
 async def get_fleet_status():
-    """
-    Get current status of all drivers.
-
-    Returns:
-    - driver count by state (idle, enroute, completed, failed)
-    - per-driver details (state, progress, ETA, load, delays)
-    """
     if not coordinator:
         raise HTTPException(status_code=500, detail="Coordinator not initialized")
 
